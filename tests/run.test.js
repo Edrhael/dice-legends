@@ -21,6 +21,11 @@ describe('mapa', () => {
     enterNode(run, 0);
     expect(enterNode(run, 0).error).toBeTruthy();
   });
+  it('registra la ruta recorrida', () => {
+    const run = newRun({ seed: 3 });
+    enterNode(run, 2);
+    expect(run.path).toEqual([2]);
+  });
 });
 
 describe('runs completas (bot)', () => {

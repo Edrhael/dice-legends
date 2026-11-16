@@ -1,7 +1,7 @@
 // Estructura de la run: mapa, nodos, recompensas, tienda, eventos, descanso, fin de partida.
 import { createRng, int, next, pick, sample, weighted, hashSeed } from './rng.js';
 import { CLASSES, RELICS, ACT_POOLS, EVENTS, RUNE_POOL, MASTERY } from './data.js';
-import { newDie } from './dice.js';
+import { newDie, MODS } from './dice.js';
 import { startCombat } from './combat.js';
 
 export const FLOORS = 8; // 0..7, el 7 es el jefe
@@ -15,7 +15,7 @@ export function newRun({ cls = 'guerrero', seed = Date.now(), asc = 0, daily = n
     v: 1, seed, rng: createRng(seed), cls, asc, daily,
     hp: C.hp, maxHp: C.hp, gold: 30, dice, relics: [], fenixUsed: false, mastery: {},
     relicPool: unlockedRelics || Object.keys(RELICS).filter((k) => RELICS[k].unlock === 0),
-    act: 1, floor: -1, lane: null, map: null,
+    act: 1, floor: -1, lane: null, map: null, path: [],
     phase: 'map', combat: null, node: null, reward: null, shop: null, event: null, pending: null,
     stats: { kills: 0, elites: 0, bosses: 0, floors: 0, dmgDealt: 0, dmgTaken: 0, bestHit: 0, rolls: 0, busts: 0, hotDice: 0, legends: 0 },
     log: [],
@@ -65,6 +65,7 @@ export function enterNode(run, idx) {
   run.floor++;
   const node = run.map[run.floor][idx];
   run.lane = node.lane;
+  run.path.push(idx);
   run.node = node;
   run.stats.floors++;
   const pool = ACT_POOLS[run.act];
@@ -196,7 +197,7 @@ export function leaveNode(run) {
   if (run.node?.type === 'boss') {
     if (run.act === 3) { run.phase = 'victory'; return { victory: true }; }
     run.act++;
-    run.floor = -1; run.lane = null;
+    run.floor = -1; run.lane = null; run.path = [];
     run.hp = Math.min(run.maxHp, run.hp + Math.ceil((run.maxHp - run.hp) * 0.6));
     run.map = genMap(run);
     run.phase = 'map';
@@ -256,7 +257,7 @@ export function resolveEvent(run, optIdx) {
       else { run.hp = Math.max(1, run.hp - 8); msg = 'Quema… pero algo sagrado queda en ti.'; res = applyOffer(run, { kind: 'rune', mod: 'holy' }); }
       break;
     case 'herrero': msg = 'El enano talla un 6 con precisión.'; res = applyOffer(run, { kind: 'carve', v: 6 }); break;
-    case 'herrero_runa': { const m = weighted(r, RUNE_POOL); msg = `Graba una runa: ${m}.`; res = applyOffer(run, { kind: 'rune', mod: m }); break; }
+    case 'herrero_runa': { const m = weighted(r, RUNE_POOL); msg = `Graba una runa de ${MODS[m].name} ${MODS[m].icon}.`; res = applyOffer(run, { kind: 'rune', mod: m }); break; }
     case 'altar': { run.hp = Math.max(1, run.hp - 12); const id = drawRelic(run, ['common', 'rare']); addRelic(run, id); msg = id ? `Obtienes: ${RELICS[id].name}.` : 'El altar calla.'; break; }
     case 'apuesta': if (next(r) < 0.5) { run.gold += 60; msg = '¡Ganas! +60 de oro.'; } else msg = 'Pierdes. El tahúr sonríe.'; break;
     case 'cofre':
