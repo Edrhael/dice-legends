@@ -2,7 +2,7 @@
 
 Roguelite de dados para móvil: aparta combinaciones como en Yahtzee, arriesga como en Farkle y abre paso por tres actos de mazmorra.
 
-**Jugar:** https://edrhael.github.io/dice-legends/ (instalable como app desde el navegador del móvil)
+**Jugar:** versión publicada como artefacto de Claude (`npm run build:single` genera `dist-single/index.html`). GitHub Pages queda listo en `.github/workflows/deploy.yml` (manual hasta activarlo).
 
 ## Desarrollo
 ```bash
@@ -18,4 +18,4 @@ node scripts/sim.js 300 guerrero 0   # simula 300 runs con el bot: [runs] [clase
 - `src/ui/`, `src/main.js` — presentación.
 - `tests/` — Vitest. `scripts/sim.js` — simulación de balance.
 
-Cada push a `main` ejecuta los tests y despliega en GitHub Pages.
+Cada push a `main` ejecuta tests y build (workflow CI).
